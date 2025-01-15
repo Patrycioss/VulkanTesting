@@ -1,31 +1,16 @@
-﻿#include <iostream>
+﻿#define GLFW_INCLUDE_VULKAN
 
-#define GLFW_INCLUDE_VULKAN
-#include <glfw/glfw3.h>
-#include <glm/glm.hpp>
+#include <exception>
+#include <iostream>
+#include <ostream>
+
+#include "hello_triangle_app/HelloTriangleApp.hpp"
 
 int main() {
-	std::cout << "Hello, World!" << std::endl;
-
-	if (!glfwInit()) {
-		throw std::runtime_error("Failed to initialize GLFW");
+	try {
+		HelloTriangleApp app;
+		app.Run();
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
 	}
-	
-	GLFWwindow* window = glfwCreateWindow(640, 480, "Hello, World!", nullptr, nullptr);
-	if (!window) {
-		glfwTerminate();
-	}
-
-	uint32_t extensionCount = 0;
-	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-
-	std::cout << extensionCount << " extensions supported\n";
-
-	glfwMakeContextCurrent(window);
-	glfwSwapInterval(1);
-	while (!glfwWindowShouldClose(window)) {
-		glfwPollEvents();
-	}
-
-	return 0;
 }
