@@ -7,7 +7,11 @@ class HelloTriangleApp {
 public: // Properties
 
 private: // Member Variables
+	const uint32_t WINDOW_WIDTH = 800;
+	const uint32_t WINDOW_HEIGHT = 600;
+	
 	GLFWwindow* windowHandle{};
+	VkInstance instance{};
 
 public: // Public Functions
 	HelloTriangleApp();
@@ -20,6 +24,6 @@ public: // Public Functions
 	void Run();
 
 private: // Private Methods
-	void Initialize();
+	void CreateVKInstance();
 	void CreateWindow();
 };
