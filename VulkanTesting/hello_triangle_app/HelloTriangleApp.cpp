@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <map>
+#include <set>
 #include <string.h>
 #include <vector>
 
@@ -94,6 +95,19 @@ void HelloTriangleApp::Run() {
 	while (!glfwWindowShouldClose(windowHandle)) {
 		glfwPollEvents();
 	}
+}
+
+void HelloTriangleApp::createWindow() {
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+	windowHandle = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Hello, World!", nullptr, nullptr);
+	if (!windowHandle) {
+		throw std::runtime_error("Failed to create window!");
+	}
+
+	glfwMakeContextCurrent(windowHandle);
+	glfwSwapInterval(1);
 }
 
 std::vector<const char*> HelloTriangleApp::getRequiredExtensions() const {
@@ -295,41 +309,6 @@ void HelloTriangleApp::pickPhysicalDevice() {
 		UTIL_THROW("Failed to find a suitable GPU!");
 }
 
-void HelloTriangleApp::createLogicalDevice() {
-	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
-
-	VkDeviceQueueCreateInfo queueCreateInfo{};
-	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
-	queueCreateInfo.queueCount = 1;
-
-	float queuePriority = 1.0f;
-	queueCreateInfo.pQueuePriorities = &queuePriority;
-
-	VkPhysicalDeviceFeatures deviceFeatures{};
-
-	VkDeviceCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	createInfo.pQueueCreateInfos = &queueCreateInfo;
-	createInfo.queueCreateInfoCount = 1;
-	createInfo.pEnabledFeatures = &deviceFeatures;
-	createInfo.enabledExtensionCount = 0;
-
-	if (ENABLE_VALIDATION_LAYERS) {
-		createInfo.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
-		createInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
-	} else {
-		createInfo.enabledLayerCount = 0;
-	}
-
-	const VkResult result = vkCreateDevice(physicalDevice, &createInfo, nullptr, &device);
-	if (result != VK_SUCCESS) {
-		UTIL_THROW("Failed to create logical device!");
-	}
-
-	vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
-}
-
 HelloTriangleApp::QueueFamilyIndices HelloTriangleApp::findQueueFamilies(const VkPhysicalDevice device) {
 	QueueFamilyIndices indices;
 
@@ -362,15 +341,49 @@ HelloTriangleApp::QueueFamilyIndices HelloTriangleApp::findQueueFamilies(const V
 	return indices;
 }
 
-void HelloTriangleApp::createWindow() {
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+void HelloTriangleApp::createLogicalDevice() {
+	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
-	windowHandle = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Hello, World!", nullptr, nullptr);
-	if (!windowHandle) {
-		throw std::runtime_error("Failed to create window!");
+	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+	std::set<uint32_t> uniqueQueueFamilies = {
+		indices.graphicsFamily.value(),
+		indices.presentFamily.value()
+	};
+
+	queueCreateInfos.reserve(uniqueQueueFamilies.size());
+
+	float queuePriority = 1.0f;
+
+	for (const auto& queueFamily : uniqueQueueFamilies) {
+		VkDeviceQueueCreateInfo queueCreateInfo{};
+		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queueCreateInfo.queueFamilyIndex = queueFamily;
+		queueCreateInfo.queueCount = 1;
+		queueCreateInfo.pQueuePriorities = &queuePriority;
+		queueCreateInfos.emplace_back(queueCreateInfo);
 	}
 
-	glfwMakeContextCurrent(windowHandle);
-	glfwSwapInterval(1);
+	VkPhysicalDeviceFeatures deviceFeatures{};
+
+	VkDeviceCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	createInfo.pQueueCreateInfos = queueCreateInfos.data();
+	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+	createInfo.pEnabledFeatures = &deviceFeatures;
+	createInfo.enabledExtensionCount = 0;
+
+	if (ENABLE_VALIDATION_LAYERS) {
+		createInfo.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
+		createInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
+	} else {
+		createInfo.enabledLayerCount = 0;
+	}
+
+	const VkResult result = vkCreateDevice(physicalDevice, &createInfo, nullptr, &device);
+	if (result != VK_SUCCESS) {
+		UTIL_THROW("Failed to create logical device!");
+	}
+
+	vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+	vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 }

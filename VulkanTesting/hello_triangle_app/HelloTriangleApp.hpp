@@ -57,7 +57,9 @@ private: // Member Variables
 
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device;
+
 	VkQueue graphicsQueue;
+	VkQueue presentQueue;
 
 public: // Public Functions
 	HelloTriangleApp();
@@ -85,7 +87,7 @@ private: // Private Methods
 	int32_t rateDeviceSuitability(VkPhysicalDevice device);
 	void pickPhysicalDevice();
 
+	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 	void createLogicalDevice();
 
-	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 };
