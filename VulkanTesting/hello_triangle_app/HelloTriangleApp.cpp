@@ -6,6 +6,63 @@
 
 #include "../utils/log.hpp"
 
+static VkResult CreateDebugUtilsMessengerEXT(const VkInstance instance,
+                                             const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+                                             const VkAllocationCallbacks* pAllocator,
+                                             VkDebugUtilsMessengerEXT* pDebugMessenger) {
+	const auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
+	if (func != nullptr) {
+		return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+	}
+	return VK_ERROR_EXTENSION_NOT_PRESENT;
+}
+
+static void DestroyDebugUtilsMessengerEXT(const VkInstance instance,
+                                          const VkDebugUtilsMessengerEXT debugMessenger,
+                                          const VkAllocationCallbacks* pAllocator) {
+	auto func = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
+	if (func != nullptr) {
+		func(instance, debugMessenger, pAllocator);
+	}
+}
+
+static unsigned DebugCallback(
+	const VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+	const VkDebugUtilsMessageTypeFlagsEXT messageType,
+	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+	void* pUserData) {
+	std::string type = "";
+
+	switch (messageType) {
+		case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
+			type = "General";
+			break;
+		case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
+			type = "Validation";
+			break;
+		case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
+			type = "Performance";
+			break;
+		default:
+			type = "Unknown";
+			break;
+	}
+
+	switch (messageSeverity) {
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+			UTIL_WARN(type + " Vulkan Warning: " + pCallbackData->pMessage);
+			break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+			UTIL_ERR(type + " Vulkan Error: " + pCallbackData->pMessage);
+			break;
+		default:
+			UTIL_LOG(type + " Vulkan Log: " + pCallbackData->pMessage);
+			break;
+	}
+
+	return VK_FALSE;
+}
+
 HelloTriangleApp::HelloTriangleApp() {
 	if (!glfwInit()) {
 		throw std::runtime_error("Failed to initialize GLFW");
@@ -15,6 +72,10 @@ HelloTriangleApp::HelloTriangleApp() {
 }
 
 HelloTriangleApp::~HelloTriangleApp() {
+	if (ENABLE_VALIDATION_LAYERS) {
+		DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+	}
+
 	vkDestroyInstance(instance, nullptr);
 	glfwDestroyWindow(windowHandle);
 	glfwTerminate();
@@ -34,14 +95,16 @@ std::vector<const char*> HelloTriangleApp::getRequiredExtensions() {
 
 	std::vector<const char*> requiredExtensions;
 
-	// requiredExtensionCount += 1;
-	requiredExtensions.reserve(requiredExtensionCount);
+	requiredExtensions.reserve(requiredExtensionCount + ADDITIONAL_REQUIRED_EXTENSIONS.size());
 
 	for (uint32_t i = 0; i < requiredExtensionCount; i++) {
 		requiredExtensions.emplace_back(glfwExtensions[i]);
 	}
 
-	requiredExtensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	for (uint32_t i = 0; i < ADDITIONAL_REQUIRED_EXTENSIONS.size(); i++) {
+		requiredExtensions.emplace_back(ADDITIONAL_REQUIRED_EXTENSIONS[i]);
+	}
+
 	return requiredExtensions;
 }
 
@@ -55,7 +118,7 @@ void HelloTriangleApp::checkValidationLayerSupport() const {
 	std::string unavailableLayers = "";
 	bool layersAvailable = true;
 
-	for (const char* layerName : validationLayers) {
+	for (const char* layerName : VALIDATION_LAYERS) {
 		bool layerFound = false;
 
 		for (const auto& layerProperties : availableLayers) {
@@ -89,7 +152,7 @@ VkApplicationInfo HelloTriangleApp::createApplicationInfo() const {
 }
 
 void HelloTriangleApp::createVKInstance() {
-	if (enableValidationLayers) {
+	if (ENABLE_VALIDATION_LAYERS) {
 		checkValidationLayerSupport();
 	}
 
@@ -132,17 +195,41 @@ void HelloTriangleApp::createVKInstance() {
 	createInfo.ppEnabledExtensionNames = extensions.data();
 	createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 
-	if (enableValidationLayers) {
-		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-		createInfo.ppEnabledLayerNames = validationLayers.data();
+	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+	if (ENABLE_VALIDATION_LAYERS) {
+		createInfo.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
+		createInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
+
+		populateDebugMessengerCreateInfo(&debugCreateInfo);
+		createInfo.pNext = &debugCreateInfo;
 	} else {
 		createInfo.enabledLayerCount = 0;
+		createInfo.pNext = nullptr;
 	}
 
 	const auto vkCreateResult = vkCreateInstance(&createInfo, nullptr, &instance);
 
 	if (vkCreateResult != VK_SUCCESS) {
 		UTIL_THROW("Failed to create Vulkan instance!");
+	}
+}
+
+void HelloTriangleApp::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* createInfo) const {
+	createInfo->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+	createInfo->messageSeverity = MESSAGE_SEVERITY;
+	createInfo->messageType = MESSAGE_TYPES;
+	createInfo->pfnUserCallback = DebugCallback;
+	createInfo->pUserData = nullptr;
+}
+
+void HelloTriangleApp::createDebugMessenger() {
+	if (!ENABLE_VALIDATION_LAYERS) return;
+
+	VkDebugUtilsMessengerCreateInfoEXT createInfo;
+	populateDebugMessengerCreateInfo(&createInfo);
+
+	if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+		UTIL_THROW("Failed to create debug messenger!");
 	}
 }
 
