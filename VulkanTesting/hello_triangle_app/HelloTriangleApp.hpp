@@ -50,6 +50,7 @@ private: // Member Variables
 	VkDebugUtilsMessengerEXT debugMessenger{};
 
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+	VkDevice device;
 
 public: // Public Functions
 	HelloTriangleApp();
@@ -74,6 +75,8 @@ private: // Private Methods
 
 	int32_t rateDeviceSuitability(VkPhysicalDevice device);
 	void pickPhysicalDevice();
+
+	void createLogicalDevice();
 
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 };

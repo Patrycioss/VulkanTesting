@@ -73,9 +73,12 @@ HelloTriangleApp::HelloTriangleApp() {
 	createVKInstance();
 	createDebugMessenger();
 	pickPhysicalDevice();
+	createLogicalDevice();
 }
 
 HelloTriangleApp::~HelloTriangleApp() {
+	vkDestroyDevice(device, nullptr);
+	
 	if (ENABLE_VALIDATION_LAYERS) {
 		DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 	}
@@ -281,6 +284,39 @@ void HelloTriangleApp::pickPhysicalDevice() {
 		physicalDevice = candidates.begin()->second;
 	} else
 		UTIL_THROW("Failed to find a suitable GPU!");
+}
+
+void HelloTriangleApp::createLogicalDevice() {
+	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+
+	VkDeviceQueueCreateInfo queueCreateInfo{};
+	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+	queueCreateInfo.queueCount = 1;
+
+	float queuePriority = 1.0f;
+	queueCreateInfo.pQueuePriorities = &queuePriority;
+
+	VkPhysicalDeviceFeatures deviceFeatures{};
+
+	VkDeviceCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	createInfo.pQueueCreateInfos = &queueCreateInfo;
+	createInfo.queueCreateInfoCount = 1;
+	createInfo.pEnabledFeatures = &deviceFeatures;
+	createInfo.enabledExtensionCount = 0;
+
+	if (ENABLE_VALIDATION_LAYERS) {
+		createInfo.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
+		createInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
+	} else {
+		createInfo.enabledLayerCount = 0;
+	}
+
+	const VkResult result = vkCreateDevice(physicalDevice, &createInfo, nullptr, &device);
+	if (result != VK_SUCCESS) {
+		UTIL_THROW("Failed to create logical device!");
+	}
 }
 
 HelloTriangleApp::QueueFamilyIndices HelloTriangleApp::findQueueFamilies(const VkPhysicalDevice device) {
