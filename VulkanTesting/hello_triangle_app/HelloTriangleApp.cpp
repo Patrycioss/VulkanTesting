@@ -388,7 +388,8 @@ void HelloTriangleApp::createLogicalDevice() {
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 	createInfo.pEnabledFeatures = &deviceFeatures;
-	createInfo.enabledExtensionCount = 0;
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
+	createInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
 
 	if (ENABLE_VALIDATION_LAYERS) {
 		createInfo.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
