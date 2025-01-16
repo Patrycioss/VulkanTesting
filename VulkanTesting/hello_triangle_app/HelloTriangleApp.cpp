@@ -78,11 +78,12 @@ HelloTriangleApp::HelloTriangleApp() {
 
 HelloTriangleApp::~HelloTriangleApp() {
 	vkDestroyDevice(device, nullptr);
-	
+
 	if (ENABLE_VALIDATION_LAYERS) {
 		DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 	}
 
+	vkDestroySurfaceKHR(instance, surface, nullptr);
 	vkDestroyInstance(instance, nullptr);
 	glfwDestroyWindow(windowHandle);
 	glfwTerminate();
@@ -235,6 +236,13 @@ void HelloTriangleApp::createDebugMessenger() {
 
 	if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
 		UTIL_THROW("Failed to create debug messenger!");
+	}
+}
+
+void HelloTriangleApp::createSuffer() {
+	const VkResult result = glfwCreateWindowSurface(instance, windowHandle, nullptr, &surface);
+	if (result != VK_SUCCESS) {
+		UTIL_THROW("Failed to create window surface!");
 	}
 }
 

@@ -1,11 +1,11 @@
 ﻿#pragma once
 
-#define GLFW_INCLUDE_VULKAN
 #include <optional>
-#include <string>
 #include <vector>
+#include <string>
 
-#include "glfw/glfw3.h"
+#define GLFW_INCLUDE_VULKAN
+#include <glfw/glfw3.h>
 
 class HelloTriangleApp {
 public: // Properties
@@ -48,6 +48,7 @@ private: // Member Variables
 
 	VkInstance instance{};
 	VkDebugUtilsMessengerEXT debugMessenger{};
+	VkSurfaceKHR surface;
 
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device;
@@ -73,6 +74,8 @@ private: // Private Methods
 
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* createInfo) const;
 	void createDebugMessenger();
+
+	void createSuffer();
 
 	int32_t rateDeviceSuitability(VkPhysicalDevice device);
 	void pickPhysicalDevice();
