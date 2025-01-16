@@ -20,6 +20,16 @@ private: // Member Variables
 		}
 	};
 
+	struct SwapChainSupportDetails {
+		VkSurfaceCapabilitiesKHR capabilities;
+		std::vector<VkSurfaceFormatKHR> formats;
+		std::vector<VkPresentModeKHR> presentModes;
+
+		bool isValid() const {
+			return !formats.empty() && !presentModes.empty();
+		}
+	};
+
 	const uint32_t WINDOW_WIDTH = 800;
 	const uint32_t WINDOW_HEIGHT = 600;
 
@@ -88,10 +98,13 @@ private: // Private Methods
 
 	void createSurface();
 
+	// Device Rating Necessary Checks
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device) const;
-	int32_t rateDeviceSuitability(VkPhysicalDevice device);
-	void pickPhysicalDevice();
-
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+
+	int32_t rateDeviceSuitability(VkPhysicalDevice device);
+
+	void pickPhysicalDevice();
 	void createLogicalDevice();
 };

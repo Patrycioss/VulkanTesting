@@ -277,56 +277,6 @@ bool HelloTriangleApp::checkDeviceExtensionSupport(const VkPhysicalDevice device
 	return requiredExtensions.empty();
 }
 
-int32_t HelloTriangleApp::rateDeviceSuitability(const VkPhysicalDevice device) {
-	VkPhysicalDeviceProperties deviceProperties;
-	vkGetPhysicalDeviceProperties(device, &deviceProperties);
-
-	VkPhysicalDeviceFeatures deviceFeatures;
-	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
-
-	int32_t score = 0;
-
-	if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-		score += 1000;
-	}
-
-	score += deviceProperties.limits.maxImageDimension2D;
-
-	if (!deviceFeatures.geometryShader ||
-		!findQueueFamilies(device).isComplete() ||
-		!checkDeviceExtensionSupport(device)) {
-		return 0;
-	}
-
-	return score;
-}
-
-void HelloTriangleApp::pickPhysicalDevice() {
-	uint32_t deviceCount = 0;
-	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
-
-	if (deviceCount == 0) {
-		UTIL_THROW("Failed to find GPUs with Vulkan support!");
-	}
-
-	std::vector<VkPhysicalDevice> devices(deviceCount);
-	vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
-
-	std::multimap<int32_t, VkPhysicalDevice> candidates;
-
-	for (const auto& device : devices) {
-		int score = rateDeviceSuitability(device);
-		if (score > 0) {
-			candidates.insert(std::pair(score, device));
-		}
-	}
-
-	if (candidates.size() > 0) {
-		physicalDevice = candidates.begin()->second;
-	} else
-		UTIL_THROW("Failed to find a suitable GPU!");
-}
-
 HelloTriangleApp::QueueFamilyIndices HelloTriangleApp::findQueueFamilies(const VkPhysicalDevice device) {
 	QueueFamilyIndices indices;
 
@@ -357,6 +307,83 @@ HelloTriangleApp::QueueFamilyIndices HelloTriangleApp::findQueueFamilies(const V
 	}
 
 	return indices;
+}
+
+HelloTriangleApp::SwapChainSupportDetails HelloTriangleApp::querySwapChainSupport(VkPhysicalDevice device) {
+	SwapChainSupportDetails details;
+
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+
+	uint32_t formatCount;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+
+	if (formatCount != 0) {
+		details.formats.resize(formatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
+	}
+
+	uint32_t presentModeCount;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
+
+	if (presentModeCount != 0) {
+		details.presentModes.resize(presentModeCount);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
+	}
+
+	return details;
+}
+
+int32_t HelloTriangleApp::rateDeviceSuitability(const VkPhysicalDevice device) {
+	VkPhysicalDeviceProperties deviceProperties;
+	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+
+	VkPhysicalDeviceFeatures deviceFeatures;
+	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+	int32_t score = 0;
+
+	if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+		score += 1000;
+	}
+
+	score += deviceProperties.limits.maxImageDimension2D;
+
+	SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
+
+	if (!deviceFeatures.geometryShader ||
+		!findQueueFamilies(device).isComplete() ||
+		!checkDeviceExtensionSupport(device) ||
+		!swapChainSupport.isValid()) {
+		return 0;
+	}
+
+	return score;
+}
+
+void HelloTriangleApp::pickPhysicalDevice() {
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+	if (deviceCount == 0) {
+		UTIL_THROW("Failed to find GPUs with Vulkan support!");
+	}
+
+	std::vector<VkPhysicalDevice> devices(deviceCount);
+	vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+	std::multimap<int32_t, VkPhysicalDevice> candidates;
+
+	for (const auto& device : devices) {
+		int score = rateDeviceSuitability(device);
+		if (score > 0) {
+			candidates.insert(std::pair(score, device));
+		}
+	}
+
+	if (candidates.size() > 0) {
+		physicalDevice = candidates.begin()->second;
+	} else
+		UTIL_THROW("Failed to find a suitable GPU!");
 }
 
 void HelloTriangleApp::createLogicalDevice() {
