@@ -317,6 +317,8 @@ void HelloTriangleApp::createLogicalDevice() {
 	if (result != VK_SUCCESS) {
 		UTIL_THROW("Failed to create logical device!");
 	}
+
+	vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 }
 
 HelloTriangleApp::QueueFamilyIndices HelloTriangleApp::findQueueFamilies(const VkPhysicalDevice device) {

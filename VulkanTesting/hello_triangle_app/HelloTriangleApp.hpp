@@ -51,6 +51,7 @@ private: // Member Variables
 
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device;
+	VkQueue graphicsQueue;
 
 public: // Public Functions
 	HelloTriangleApp();
