@@ -72,6 +72,7 @@ HelloTriangleApp::HelloTriangleApp() {
 	createWindow();
 	createVKInstance();
 	createDebugMessenger();
+	createSurface();
 	pickPhysicalDevice();
 	createLogicalDevice();
 }
@@ -239,7 +240,7 @@ void HelloTriangleApp::createDebugMessenger() {
 	}
 }
 
-void HelloTriangleApp::createSuffer() {
+void HelloTriangleApp::createSurface() {
 	const VkResult result = glfwCreateWindowSurface(instance, windowHandle, nullptr, &surface);
 	if (result != VK_SUCCESS) {
 		UTIL_THROW("Failed to create window surface!");
@@ -261,7 +262,7 @@ int32_t HelloTriangleApp::rateDeviceSuitability(const VkPhysicalDevice device) {
 
 	score += deviceProperties.limits.maxImageDimension2D;
 
-	if (!deviceFeatures.geometryShader || !findQueueFamilies(device).graphicsFamily.has_value()) {
+	if (!deviceFeatures.geometryShader || !findQueueFamilies(device).isComplete()) {
 		return 0;
 	}
 
@@ -344,7 +345,14 @@ HelloTriangleApp::QueueFamilyIndices HelloTriangleApp::findQueueFamilies(const V
 			indices.graphicsFamily = i;
 		}
 
-		if (indices.graphicsFamily.has_value()) {
+		VkBool32 presentSupport = false;
+		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+
+		if (presentSupport) {
+			indices.presentFamily = i;
+		}
+
+		if (indices.isComplete()) {
 			break;
 		}
 

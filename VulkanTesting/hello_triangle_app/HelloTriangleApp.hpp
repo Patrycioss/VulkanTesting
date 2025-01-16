@@ -13,6 +13,11 @@ public: // Properties
 private: // Member Variables
 	struct QueueFamilyIndices {
 		std::optional<uint32_t> graphicsFamily;
+		std::optional<uint32_t> presentFamily;
+
+		bool isComplete() const {
+			return graphicsFamily.has_value() && presentFamily.has_value();
+		}
 	};
 
 	const uint32_t WINDOW_WIDTH = 800;
@@ -48,7 +53,7 @@ private: // Member Variables
 
 	VkInstance instance{};
 	VkDebugUtilsMessengerEXT debugMessenger{};
-	VkSurfaceKHR surface;
+	VkSurfaceKHR surface{};
 
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device;
@@ -75,7 +80,7 @@ private: // Private Methods
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* createInfo) const;
 	void createDebugMessenger();
 
-	void createSuffer();
+	void createSurface();
 
 	int32_t rateDeviceSuitability(VkPhysicalDevice device);
 	void pickPhysicalDevice();
