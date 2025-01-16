@@ -23,7 +23,6 @@ private: // Member Variables
 		// VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
 		VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
 		VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-		
 
 	const std::vector<const char*> VALIDATION_LAYERS = {
 		"VK_LAYER_KHRONOS_validation"
@@ -41,8 +40,11 @@ private: // Member Variables
 #endif
 
 	GLFWwindow* windowHandle{};
+
 	VkInstance instance{};
 	VkDebugUtilsMessengerEXT debugMessenger{};
+
+	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
 public: // Public Functions
 	HelloTriangleApp();
@@ -55,13 +57,16 @@ public: // Public Functions
 	void Run();
 
 private: // Private Methods
-	std::vector<const char*> getRequiredExtensions();
+	std::vector<const char*> getRequiredExtensions() const;
 	void checkValidationLayerSupport() const;
 	VkApplicationInfo createApplicationInfo() const;
 	void createVKInstance();
 
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* createInfo) const;
 	void createDebugMessenger();
+
+	int rateDeviceSuitability(VkPhysicalDevice device);
+	void pickPhysicalDevice();
 
 	void createWindow();
 };

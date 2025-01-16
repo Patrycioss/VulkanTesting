@@ -1,6 +1,7 @@
 ﻿#include "HelloTriangleApp.hpp"
 
 #include <iostream>
+#include <map>
 #include <string.h>
 #include <vector>
 
@@ -68,7 +69,10 @@ HelloTriangleApp::HelloTriangleApp() {
 		throw std::runtime_error("Failed to initialize GLFW");
 	}
 
+	createWindow();
 	createVKInstance();
+	createDebugMessenger();
+	pickPhysicalDevice();
 }
 
 HelloTriangleApp::~HelloTriangleApp() {
@@ -82,14 +86,13 @@ HelloTriangleApp::~HelloTriangleApp() {
 }
 
 void HelloTriangleApp::Run() {
-	createWindow();
 
 	while (!glfwWindowShouldClose(windowHandle)) {
 		glfwPollEvents();
 	}
 }
 
-std::vector<const char*> HelloTriangleApp::getRequiredExtensions() {
+std::vector<const char*> HelloTriangleApp::getRequiredExtensions() const {
 	uint32_t requiredExtensionCount = 0;
 	const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&requiredExtensionCount);
 
@@ -231,6 +234,54 @@ void HelloTriangleApp::createDebugMessenger() {
 	if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
 		UTIL_THROW("Failed to create debug messenger!");
 	}
+}
+
+int32_t HelloTriangleApp::rateDeviceSuitability(const VkPhysicalDevice device) {
+	VkPhysicalDeviceProperties deviceProperties;
+	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+
+	VkPhysicalDeviceFeatures deviceFeatures;
+	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+	int32_t score = 0;
+
+	if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+		score += 1000;
+	}
+
+	score += deviceProperties.limits.maxImageDimension2D;
+
+	if (!deviceFeatures.geometryShader) {
+		return 0;
+	}
+	
+	return score;
+}
+
+void HelloTriangleApp::pickPhysicalDevice() {
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+	if (deviceCount == 0) {
+		UTIL_THROW("Failed to find GPUs with Vulkan support!");
+	}
+
+	std::vector<VkPhysicalDevice> devices(deviceCount);
+	vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+	std::multimap<int32_t, VkPhysicalDevice> candidates;
+
+	for (const auto& device : devices) {
+		int score = rateDeviceSuitability(device);
+		if (score > 0) {
+			candidates.insert(std::pair(score, device));
+		}
+	}
+
+	if (candidates.size() > 0) {
+		physicalDevice = candidates.begin()->second;
+	}
+	else UTIL_THROW("Failed to find a suitable GPU!");
 }
 
 void HelloTriangleApp::createWindow() {
