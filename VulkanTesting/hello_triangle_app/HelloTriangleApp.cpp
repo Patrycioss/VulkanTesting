@@ -11,35 +11,30 @@ HelloTriangleApp::HelloTriangleApp() {
 		throw std::runtime_error("Failed to initialize GLFW");
 	}
 
-	CreateVKInstance();
+	createVKInstance();
 }
 
 HelloTriangleApp::~HelloTriangleApp() {
+	vkDestroyInstance(instance, nullptr);
 	glfwDestroyWindow(windowHandle);
 	glfwTerminate();
 }
 
 void HelloTriangleApp::Run() {
-	CreateWindow();
+	createWindow();
 
 	while (!glfwWindowShouldClose(windowHandle)) {
 		glfwPollEvents();
 	}
 }
 
-void HelloTriangleApp::CreateVKInstance() {
-	VkApplicationInfo appInfo = {};
-	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = "Hello Triangle";
-	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.pEngineName = "No Engine";
-	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.apiVersion = VK_MAKE_VERSION(1, 0, 0);
-
+std::vector<const char*> HelloTriangleApp::getRequiredExtensions() {
 	uint32_t requiredExtensionCount = 0;
 	const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&requiredExtensionCount);
 
 	std::vector<const char*> requiredExtensions;
+
+	// requiredExtensionCount += 1;
 	requiredExtensions.reserve(requiredExtensionCount);
 
 	for (uint32_t i = 0; i < requiredExtensionCount; i++) {
@@ -47,6 +42,60 @@ void HelloTriangleApp::CreateVKInstance() {
 	}
 
 	requiredExtensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	return requiredExtensions;
+}
+
+void HelloTriangleApp::checkValidationLayerSupport() const {
+	uint32_t layerCount;
+	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+	std::vector<VkLayerProperties> availableLayers(layerCount);
+	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+	std::string unavailableLayers = "";
+	bool layersAvailable = true;
+
+	for (const char* layerName : validationLayers) {
+		bool layerFound = false;
+
+		for (const auto& layerProperties : availableLayers) {
+			if (strcmp(layerName, layerProperties.layerName) == 0) {
+				layerFound = true;
+				break;
+			}
+		}
+
+		if (!layerFound) {
+			layersAvailable = false;
+			unavailableLayers += layerName;
+			unavailableLayers += " ";
+		}
+	}
+
+	if (!layersAvailable) {
+		UTIL_THROW("Requested validation layers not supported " + unavailableLayers);
+	}
+}
+
+VkApplicationInfo HelloTriangleApp::createApplicationInfo() const {
+	VkApplicationInfo applicationInfo = {};
+	applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	applicationInfo.pApplicationName = "Hello Triangle";
+	applicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+	applicationInfo.pEngineName = "No Engine";
+	applicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+	applicationInfo.apiVersion = VK_MAKE_VERSION(1, 0, 0);
+	return applicationInfo;
+}
+
+void HelloTriangleApp::createVKInstance() {
+	if (enableValidationLayers) {
+		checkValidationLayerSupport();
+	}
+
+	const VkApplicationInfo applicationInfo = createApplicationInfo();
+
+	std::vector<const char*> requiredExtensions = getRequiredExtensions();
 
 	uint32_t availableExtensionCount = 0;
 	vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, nullptr);
@@ -63,7 +112,7 @@ void HelloTriangleApp::CreateVKInstance() {
 				requiredExtensions.erase(requiredExtensions.begin() + j);
 			}
 		}
-		extensions.push_back(availableExtensions[i].extensionName);
+		extensions.emplace_back(availableExtensions[i].extensionName);
 	}
 
 	if (requiredExtensions.size() > 0) {
@@ -72,22 +121,32 @@ void HelloTriangleApp::CreateVKInstance() {
 			unavailableExtensions += extension;
 			unavailableExtensions += " ";
 		}
+
+		UTIL_THROW("Requested validation extensions not supported: " + unavailableExtensions);
 	}
 
 	VkInstanceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-	createInfo.pApplicationInfo = &appInfo;
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(availableExtensions.size());
+	createInfo.pApplicationInfo = &applicationInfo;
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
-	createInfo.enabledLayerCount = 0;
 	createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 
-	if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
+	if (enableValidationLayers) {
+		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+		createInfo.ppEnabledLayerNames = validationLayers.data();
+	} else {
+		createInfo.enabledLayerCount = 0;
+	}
+
+	const auto vkCreateResult = vkCreateInstance(&createInfo, nullptr, &instance);
+
+	if (vkCreateResult != VK_SUCCESS) {
 		UTIL_THROW("Failed to create Vulkan instance!");
 	}
 }
 
-void HelloTriangleApp::CreateWindow() {
+void HelloTriangleApp::createWindow() {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
