@@ -105,6 +105,10 @@ private: // Private Methods
 
 	int32_t rateDeviceSuitability(VkPhysicalDevice device);
 
+	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+
 	void pickPhysicalDevice();
 	void createLogicalDevice();
 };
