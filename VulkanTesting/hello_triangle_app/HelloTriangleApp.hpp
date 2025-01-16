@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #define GLFW_INCLUDE_VULKAN
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -10,6 +11,10 @@ class HelloTriangleApp {
 public: // Properties
 
 private: // Member Variables
+	struct QueueFamilyIndices {
+		std::optional<uint32_t> graphicsFamily;
+	};
+
 	const uint32_t WINDOW_WIDTH = 800;
 	const uint32_t WINDOW_HEIGHT = 600;
 
@@ -57,6 +62,8 @@ public: // Public Functions
 	void Run();
 
 private: // Private Methods
+	void createWindow();
+
 	std::vector<const char*> getRequiredExtensions() const;
 	void checkValidationLayerSupport() const;
 	VkApplicationInfo createApplicationInfo() const;
@@ -65,8 +72,8 @@ private: // Private Methods
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* createInfo) const;
 	void createDebugMessenger();
 
-	int rateDeviceSuitability(VkPhysicalDevice device);
+	int32_t rateDeviceSuitability(VkPhysicalDevice device);
 	void pickPhysicalDevice();
 
-	void createWindow();
+	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 };

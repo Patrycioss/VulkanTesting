@@ -86,7 +86,6 @@ HelloTriangleApp::~HelloTriangleApp() {
 }
 
 void HelloTriangleApp::Run() {
-
 	while (!glfwWindowShouldClose(windowHandle)) {
 		glfwPollEvents();
 	}
@@ -251,10 +250,10 @@ int32_t HelloTriangleApp::rateDeviceSuitability(const VkPhysicalDevice device) {
 
 	score += deviceProperties.limits.maxImageDimension2D;
 
-	if (!deviceFeatures.geometryShader) {
+	if (!deviceFeatures.geometryShader || !findQueueFamilies(device).graphicsFamily.has_value()) {
 		return 0;
 	}
-	
+
 	return score;
 }
 
@@ -280,8 +279,33 @@ void HelloTriangleApp::pickPhysicalDevice() {
 
 	if (candidates.size() > 0) {
 		physicalDevice = candidates.begin()->second;
+	} else
+		UTIL_THROW("Failed to find a suitable GPU!");
+}
+
+HelloTriangleApp::QueueFamilyIndices HelloTriangleApp::findQueueFamilies(const VkPhysicalDevice device) {
+	QueueFamilyIndices indices;
+
+	uint32_t queueFamilyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+	int32_t i = 0;
+	for (const auto& queueFamily : queueFamilies) {
+		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+			indices.graphicsFamily = i;
+		}
+
+		if (indices.graphicsFamily.has_value()) {
+			break;
+		}
+
+		i++;
 	}
-	else UTIL_THROW("Failed to find a suitable GPU!");
+
+	return indices;
 }
 
 void HelloTriangleApp::createWindow() {
