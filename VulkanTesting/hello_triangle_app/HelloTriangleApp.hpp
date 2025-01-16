@@ -43,6 +43,10 @@ private: // Member Variables
 		VK_EXT_DEBUG_UTILS_EXTENSION_NAME, // Debug Message Callback
 	};
 
+	const std::vector<const char*> DEVICE_EXTENSIONS = {
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+	};
+
 #ifdef NDEBUG
 	const bool ENABLE_VALIDATION_LAYERS = false;
 #else
@@ -84,10 +88,10 @@ private: // Private Methods
 
 	void createSurface();
 
+	bool checkDeviceExtensionSupport(VkPhysicalDevice device) const;
 	int32_t rateDeviceSuitability(VkPhysicalDevice device);
 	void pickPhysicalDevice();
 
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 	void createLogicalDevice();
-
 };

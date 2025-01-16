@@ -261,6 +261,22 @@ void HelloTriangleApp::createSurface() {
 	}
 }
 
+bool HelloTriangleApp::checkDeviceExtensionSupport(const VkPhysicalDevice device) const {
+	uint32_t extensionCount;
+	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+	std::set<std::string> requiredExtensions(DEVICE_EXTENSIONS.begin(), DEVICE_EXTENSIONS.end());
+
+	for (const auto& extension : availableExtensions) {
+		requiredExtensions.erase(extension.extensionName);
+	}
+
+	return requiredExtensions.empty();
+}
+
 int32_t HelloTriangleApp::rateDeviceSuitability(const VkPhysicalDevice device) {
 	VkPhysicalDeviceProperties deviceProperties;
 	vkGetPhysicalDeviceProperties(device, &deviceProperties);
@@ -276,7 +292,9 @@ int32_t HelloTriangleApp::rateDeviceSuitability(const VkPhysicalDevice device) {
 
 	score += deviceProperties.limits.maxImageDimension2D;
 
-	if (!deviceFeatures.geometryShader || !findQueueFamilies(device).isComplete()) {
+	if (!deviceFeatures.geometryShader ||
+		!findQueueFamilies(device).isComplete() ||
+		!checkDeviceExtensionSupport(device)) {
 		return 0;
 	}
 
