@@ -539,4 +539,11 @@ void HelloTriangleApp::createSwapChain() {
 	if (result != VK_SUCCESS) {
 		UTIL_THROW("Failed to create swap chain!");
 	}
+
+	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+	swapChainImages.resize(imageCount);
+	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+
+	swapChainImageFormat = surfaceFormat.format;
+	swapChainExtent = extent;
 }

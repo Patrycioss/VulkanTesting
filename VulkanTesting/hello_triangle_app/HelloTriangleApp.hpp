@@ -76,6 +76,9 @@ private: // Member Variables
 	VkQueue presentQueue;
 
 	VkSwapchainKHR swapChain;
+	std::vector<VkImage> swapChainImages;
+	VkFormat swapChainImageFormat;
+	VkExtent2D swapChainExtent;
 
 public: // Public Functions
 	HelloTriangleApp();
