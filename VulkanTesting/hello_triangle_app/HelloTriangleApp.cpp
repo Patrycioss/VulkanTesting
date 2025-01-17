@@ -205,6 +205,11 @@ void HelloTriangleApp::createVKInstance() {
 				requiredExtensions.erase(requiredExtensions.begin() + j);
 			}
 		}
+
+		// Remove extension that doesn't work
+		if (strcmp(availableExtensions[i].extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME)== 0 ) {
+			continue;
+		}
 		extensions.emplace_back(availableExtensions[i].extensionName);
 	}
 
