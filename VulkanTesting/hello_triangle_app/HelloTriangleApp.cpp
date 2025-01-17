@@ -78,9 +78,11 @@ HelloTriangleApp::HelloTriangleApp() {
 	createSurface();
 	pickPhysicalDevice();
 	createLogicalDevice();
+	createSwapChain();
 }
 
 HelloTriangleApp::~HelloTriangleApp() {
+	vkDestroySwapchainKHR(device, swapChain, nullptr);
 	vkDestroyDevice(device, nullptr);
 
 	if (ENABLE_VALIDATION_LAYERS) {
@@ -476,4 +478,65 @@ void HelloTriangleApp::createLogicalDevice() {
 
 	vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 	vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+}
+
+void HelloTriangleApp::createSwapChain() {
+	SwapChainSupportDetails swapChainSupportDetails = querySwapChainSupport(physicalDevice);
+
+	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupportDetails.formats);
+	VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupportDetails.presentModes);
+	VkExtent2D extent = chooseSwapExtent(swapChainSupportDetails.capabilities);
+
+	uint32_t imageCount = swapChainSupportDetails.capabilities.minImageCount + 1;
+
+	if (swapChainSupportDetails.capabilities.maxImageCount > 0 && imageCount > swapChainSupportDetails.capabilities.maxImageCount) {
+		imageCount = swapChainSupportDetails.capabilities.maxImageCount;
+	}
+
+	VkSwapchainCreateInfoKHR createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	createInfo.surface = surface;
+	createInfo.minImageCount = imageCount;
+	createInfo.imageFormat = surfaceFormat.format;
+	createInfo.imageColorSpace = surfaceFormat.colorSpace;
+	createInfo.imageExtent = extent;
+	createInfo.imageArrayLayers = 1;
+	createInfo.presentMode = presentMode;
+
+	// Ignores color of pixels that are not visible.
+	createInfo.clipped = VK_TRUE;
+
+	// For if old swap chain becomes invalid and a new one needs to be created. During resize for example.
+	createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+	// Applies certain transformations (like rotations) to all images on the chain. CurrentTransform for normal.
+	createInfo.preTransform = swapChainSupportDetails.capabilities.currentTransform;
+
+	// For blending with other windows.
+	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+	//The imageUsage bit field specifies what kind of operations we’ll use the images in the swap chain for.
+	//We’re going to render directly to them, which means that they’re used as color attachment.
+	//It is also possible that you’ll render images to a separate image first to perform operations like post-processing.
+	//In that case you may use a value like VK_IMAGE_USAGE_TRANSFER_DST_BIT instead and use a memory operation to transfer the rendered image to a swap chain image.
+	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+	const uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+
+	// Sharing mode concurrent for now if they are the same as ownership is more difficult.
+	if (indices.graphicsFamily != indices.presentFamily) {
+		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		createInfo.queueFamilyIndexCount = 2;
+		createInfo.pQueueFamilyIndices = queueFamilyIndices;
+	} else {
+		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		createInfo.queueFamilyIndexCount = 0; // Optional
+		createInfo.pQueueFamilyIndices = nullptr; // Optional
+	}
+
+	const VkResult result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain);
+	if (result != VK_SUCCESS) {
+		UTIL_THROW("Failed to create swap chain!");
+	}
 }

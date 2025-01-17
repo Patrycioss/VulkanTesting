@@ -63,17 +63,19 @@ private: // Member Variables
 	const bool ENABLE_VALIDATION_LAYERS = true;
 #endif
 
-	GLFWwindow* windowHandle{};
+	GLFWwindow* windowHandle;
 
-	VkInstance instance{};
-	VkDebugUtilsMessengerEXT debugMessenger{};
-	VkSurfaceKHR surface{};
+	VkInstance instance;
+	VkDebugUtilsMessengerEXT debugMessenger;
+	VkSurfaceKHR surface;
 
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device;
 
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
+
+	VkSwapchainKHR swapChain;
 
 public: // Public Functions
 	HelloTriangleApp();
@@ -111,4 +113,5 @@ private: // Private Methods
 
 	void pickPhysicalDevice();
 	void createLogicalDevice();
+	void createSwapChain();
 };
