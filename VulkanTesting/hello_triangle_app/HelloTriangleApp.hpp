@@ -79,6 +79,7 @@ private: // Member Variables
 	std::vector<VkImage> swapChainImages;
 	VkFormat swapChainImageFormat;
 	VkExtent2D swapChainExtent;
+	std::vector<VkImageView> swapChainImageViews;
 
 public: // Public Functions
 	HelloTriangleApp();
@@ -117,4 +118,5 @@ private: // Private Methods
 	void pickPhysicalDevice();
 	void createLogicalDevice();
 	void createSwapChain();
+	void createImageViews();
 };

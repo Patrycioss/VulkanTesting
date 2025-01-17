@@ -79,9 +79,14 @@ HelloTriangleApp::HelloTriangleApp() {
 	pickPhysicalDevice();
 	createLogicalDevice();
 	createSwapChain();
+	createImageViews();
 }
 
 HelloTriangleApp::~HelloTriangleApp() {
+	for (const auto imageView : swapChainImageViews) {
+		vkDestroyImageView(device, imageView, nullptr);
+	}
+	
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
 	vkDestroyDevice(device, nullptr);
 
@@ -546,4 +551,35 @@ void HelloTriangleApp::createSwapChain() {
 
 	swapChainImageFormat = surfaceFormat.format;
 	swapChainExtent = extent;
+}
+
+void HelloTriangleApp::createImageViews() {
+	swapChainImageViews.resize(swapChainImages.size());
+
+	for (size_t i = 0; i < swapChainImages.size(); i++) {
+		VkImageViewCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		createInfo.image = swapChainImages[i];
+		createInfo.format = swapChainImageFormat;
+		
+		// 1D textures, 2D textures, 3D textures or cube maps
+		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+
+		// Do funky colour stuff
+		createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		createInfo.subresourceRange.baseMipLevel = 0;
+		createInfo.subresourceRange.levelCount = 1;
+		createInfo.subresourceRange.baseArrayLayer = 0;
+		createInfo.subresourceRange.layerCount = 1;
+
+		const VkResult result = vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]);
+		if (result != VK_SUCCESS) {
+			UTIL_THROW("Failed to create image view for swapChainImage " + std::to_string(i) + " !");
+		}
+	}
 }
