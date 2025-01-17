@@ -190,44 +190,44 @@ void HelloTriangleApp::createVKInstance() {
 
 	std::vector<const char*> requiredExtensions = getRequiredExtensions();
 
-	uint32_t availableExtensionCount = 0;
-	vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, nullptr);
+	// uint32_t availableExtensionCount = 0;
+	// vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, nullptr);
+	//
+	// std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
+	// vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, availableExtensions.data());
+	//
+	// std::vector<const char*> extensions;
+	// extensions.reserve(availableExtensionCount);
 
-	std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
-	vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, availableExtensions.data());
-
-	std::vector<const char*> extensions;
-	extensions.reserve(availableExtensionCount);
-
-	for (int i = 0; i < availableExtensions.size(); i++) {
-		for (int j = requiredExtensions.size() - 1; j >= 0; j--) {
-			if (strcmp(requiredExtensions[j], availableExtensions[i].extensionName) == 0) {
-				requiredExtensions.erase(requiredExtensions.begin() + j);
-			}
-		}
-
-		// Remove extension that doesn't work
-		if (strcmp(availableExtensions[i].extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME)== 0 ) {
-			continue;
-		}
-		extensions.emplace_back(availableExtensions[i].extensionName);
-	}
-
-	if (requiredExtensions.size() > 0) {
-		std::string unavailableExtensions = "";
-		for (const auto& extension : requiredExtensions) {
-			unavailableExtensions += extension;
-			unavailableExtensions += " ";
-		}
-
-		UTIL_THROW("Requested validation extensions not supported: " + unavailableExtensions);
-	}
+	// for (int i = 0; i < availableExtensions.size(); i++) {
+	// 	for (int j = requiredExtensions.size() - 1; j >= 0; j--) {
+	// 		if (strcmp(requiredExtensions[j], availableExtensions[i].extensionName) == 0) {
+	// 			requiredExtensions.erase(requiredExtensions.begin() + j);
+	// 		}
+	// 	}
+	//
+	// 	// Remove extension that doesn't work
+	// 	if (strcmp(availableExtensions[i].extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME)== 0 ) {
+	// 		continue;
+	// 	}
+	// 	extensions.emplace_back(availableExtensions[i].extensionName);
+	// }
+	//
+	// if (requiredExtensions.size() > 0) {
+	// 	std::string unavailableExtensions = "";
+	// 	for (const auto& extension : requiredExtensions) {
+	// 		unavailableExtensions += extension;
+	// 		unavailableExtensions += " ";
+	// 	}
+	//
+	// 	UTIL_THROW("Requested validation extensions not supported: " + unavailableExtensions);
+	// }
 
 	VkInstanceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &applicationInfo;
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-	createInfo.ppEnabledExtensionNames = extensions.data();
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
+	createInfo.ppEnabledExtensionNames = requiredExtensions.data();
 	createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
