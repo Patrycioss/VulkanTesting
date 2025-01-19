@@ -8,6 +8,7 @@
 #include <vector>
 #include <bits/stl_algo.h>
 
+#include "../utils/IO.hpp"
 #include "../utils/log.hpp"
 
 static VkResult CreateDebugUtilsMessengerEXT(const VkInstance instance,
@@ -589,5 +590,9 @@ void HelloTriangleApp::createImageViews() {
 }
 
 void HelloTriangleApp::createGraphicsPipeline() {
+	auto vertShaderCode = utils::io::readToBytes(utils::io::path + "shaders/shader.vert");
+	auto fragShaderCode = utils::io::readToBytes(utils::io::path + "shaders/shader.frag");
+
+	
 	
 }
