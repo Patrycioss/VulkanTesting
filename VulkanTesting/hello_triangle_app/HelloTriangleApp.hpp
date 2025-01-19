@@ -48,8 +48,7 @@ private: // Member Variables
 		"VK_LAYER_KHRONOS_validation"
 	};
 
-	const std::vector<const char*> ADDITIONAL_REQUIRED_EXTENSIONS = {
-		VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, // Mac stuff?
+	const std::vector<const char*> REQUIRED_EXTENSIONS = {
 		VK_EXT_DEBUG_UTILS_EXTENSION_NAME, // Debug Message Callback
 	};
 
@@ -95,6 +94,8 @@ private: // Private Methods
 	void createWindow();
 
 	std::vector<const char*> getRequiredExtensions() const;
+	void validateExtensions(const std::vector<const char*>& extensions) const;
+	
 	void checkValidationLayerSupport() const;
 	VkApplicationInfo createApplicationInfo() const;
 	void createVKInstance();

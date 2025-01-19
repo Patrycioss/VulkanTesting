@@ -125,17 +125,48 @@ std::vector<const char*> HelloTriangleApp::getRequiredExtensions() const {
 
 	std::vector<const char*> requiredExtensions;
 
-	requiredExtensions.reserve(requiredExtensionCount + ADDITIONAL_REQUIRED_EXTENSIONS.size());
+	requiredExtensions.reserve(requiredExtensionCount + REQUIRED_EXTENSIONS.size());
 
 	for (uint32_t i = 0; i < requiredExtensionCount; i++) {
 		requiredExtensions.emplace_back(glfwExtensions[i]);
 	}
 
-	for (uint32_t i = 0; i < ADDITIONAL_REQUIRED_EXTENSIONS.size(); i++) {
-		requiredExtensions.emplace_back(ADDITIONAL_REQUIRED_EXTENSIONS[i]);
+	for (uint32_t i = 0; i < REQUIRED_EXTENSIONS.size(); i++) {
+		requiredExtensions.emplace_back(REQUIRED_EXTENSIONS[i]);
 	}
 
 	return requiredExtensions;
+}
+
+void HelloTriangleApp::validateExtensions(const std::vector<const char*>& extensions) const {
+	std::string unavailableExtensions = "";
+
+	uint32_t availableExtensionCount = 0;
+	vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, nullptr);
+	
+	std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
+	vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, availableExtensions.data());
+
+	for (const auto& extension : extensions) {
+		bool extensionAvailable = false;
+		
+		for (const auto& avaialableExtension : availableExtensions) {
+			if (strcmp(extension, avaialableExtension.extensionName) == 0) {
+				extensionAvailable = true;
+				break;
+			}
+		}
+
+		if (!extensionAvailable) {
+			unavailableExtensions += extension;
+			unavailableExtensions += " ";
+		}
+	}
+
+	if (!unavailableExtensions.empty()) {
+		UTIL_THROW("Failed to find required extensions: " + unavailableExtensions);
+	}
+	
 }
 
 void HelloTriangleApp::checkValidationLayerSupport() const {
@@ -189,46 +220,13 @@ void HelloTriangleApp::createVKInstance() {
 	const VkApplicationInfo applicationInfo = createApplicationInfo();
 
 	std::vector<const char*> requiredExtensions = getRequiredExtensions();
-
-	// uint32_t availableExtensionCount = 0;
-	// vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, nullptr);
-	//
-	// std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
-	// vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, availableExtensions.data());
-	//
-	// std::vector<const char*> extensions;
-	// extensions.reserve(availableExtensionCount);
-
-	// for (int i = 0; i < availableExtensions.size(); i++) {
-	// 	for (int j = requiredExtensions.size() - 1; j >= 0; j--) {
-	// 		if (strcmp(requiredExtensions[j], availableExtensions[i].extensionName) == 0) {
-	// 			requiredExtensions.erase(requiredExtensions.begin() + j);
-	// 		}
-	// 	}
-	//
-	// 	// Remove extension that doesn't work
-	// 	if (strcmp(availableExtensions[i].extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME)== 0 ) {
-	// 		continue;
-	// 	}
-	// 	extensions.emplace_back(availableExtensions[i].extensionName);
-	// }
-	//
-	// if (requiredExtensions.size() > 0) {
-	// 	std::string unavailableExtensions = "";
-	// 	for (const auto& extension : requiredExtensions) {
-	// 		unavailableExtensions += extension;
-	// 		unavailableExtensions += " ";
-	// 	}
-	//
-	// 	UTIL_THROW("Requested validation extensions not supported: " + unavailableExtensions);
-	// }
+	validateExtensions(requiredExtensions);
 
 	VkInstanceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &applicationInfo;
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
 	createInfo.ppEnabledExtensionNames = requiredExtensions.data();
-	createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 	if (ENABLE_VALIDATION_LAYERS) {
@@ -260,7 +258,7 @@ void HelloTriangleApp::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCre
 void HelloTriangleApp::createDebugMessenger() {
 	if (!ENABLE_VALIDATION_LAYERS) return;
 
-	VkDebugUtilsMessengerCreateInfoEXT createInfo;
+	VkDebugUtilsMessengerCreateInfoEXT createInfo{};
 	populateDebugMessengerCreateInfo(&createInfo);
 
 	if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
