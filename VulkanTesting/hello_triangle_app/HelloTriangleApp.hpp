@@ -120,4 +120,5 @@ private: // Private Methods
 	void createLogicalDevice();
 	void createSwapChain();
 	void createImageViews();
+	void createGraphicsPipeline();
 };

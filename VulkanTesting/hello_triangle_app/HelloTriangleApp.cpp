@@ -80,6 +80,7 @@ HelloTriangleApp::HelloTriangleApp() {
 	createLogicalDevice();
 	createSwapChain();
 	createImageViews();
+	createGraphicsPipeline();
 }
 
 HelloTriangleApp::~HelloTriangleApp() {
@@ -585,4 +586,8 @@ void HelloTriangleApp::createImageViews() {
 			UTIL_THROW("Failed to create image view for swapChainImage " + std::to_string(i) + " !");
 		}
 	}
+}
+
+void HelloTriangleApp::createGraphicsPipeline() {
+	
 }

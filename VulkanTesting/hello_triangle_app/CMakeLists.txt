@@ -3,6 +3,7 @@ project(HelloTriangleApp)
 set(CMAKE_CXX_STANDARD 20)
 
 file(GLOB_RECURSE SOURCES *.cpp *.hpp)
+file(COPY resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../deps deps)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../utils utils)
