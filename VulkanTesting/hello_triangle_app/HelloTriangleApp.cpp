@@ -88,7 +88,7 @@ HelloTriangleApp::~HelloTriangleApp() {
 	for (const auto imageView : swapChainImageViews) {
 		vkDestroyImageView(device, imageView, nullptr);
 	}
-	
+
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
 	vkDestroyDevice(device, nullptr);
 
@@ -145,13 +145,13 @@ void HelloTriangleApp::validateExtensions(const std::vector<const char*>& extens
 
 	uint32_t availableExtensionCount = 0;
 	vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, nullptr);
-	
+
 	std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
 	vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, availableExtensions.data());
 
 	for (const auto& extension : extensions) {
 		bool extensionAvailable = false;
-		
+
 		for (const auto& avaialableExtension : availableExtensions) {
 			if (strcmp(extension, avaialableExtension.extensionName) == 0) {
 				extensionAvailable = true;
@@ -168,7 +168,6 @@ void HelloTriangleApp::validateExtensions(const std::vector<const char*>& extens
 	if (!unavailableExtensions.empty()) {
 		UTIL_THROW("Failed to find required extensions: " + unavailableExtensions);
 	}
-	
 }
 
 void HelloTriangleApp::checkValidationLayerSupport() const {
@@ -566,7 +565,7 @@ void HelloTriangleApp::createImageViews() {
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		createInfo.image = swapChainImages[i];
 		createInfo.format = swapChainImageFormat;
-		
+
 		// 1D textures, 2D textures, 3D textures or cube maps
 		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 
@@ -589,10 +588,27 @@ void HelloTriangleApp::createImageViews() {
 	}
 }
 
-void HelloTriangleApp::createGraphicsPipeline() {
-	auto vertShaderCode = utils::io::readToBytes(utils::io::path + "shaders/shader.vert");
-	auto fragShaderCode = utils::io::readToBytes(utils::io::path + "shaders/shader.frag");
+VkShaderModule HelloTriangleApp::createShaderModule(const std::vector<char>& code, const std::string& shaderName) {
+	VkShaderModuleCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	createInfo.codeSize = code.size();
+	createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
-	
-	
+	VkShaderModule shaderModule;
+	if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+		UTIL_THROW("Failed to create shader module for shader with name: " + shaderName);
+	}
+
+	return shaderModule;
+}
+
+void HelloTriangleApp::createGraphicsPipeline() {
+	const std::vector<char> vertShaderCode = utils::io::readToBytes(utils::io::path + "shaders/shader.vert");
+	const std::vector<char> fragShaderCode = utils::io::readToBytes(utils::io::path + "shaders/shader.frag");
+
+	const VkShaderModule vertShaderModule = createShaderModule(vertShaderCode, "shader");
+	const VkShaderModule fragShaderModule = createShaderModule(fragShaderCode, "fragment");
+
+	vkDestroyShaderModule(device, fragShaderModule, nullptr);
+	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }

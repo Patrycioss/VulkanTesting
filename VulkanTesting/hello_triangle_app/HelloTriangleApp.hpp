@@ -120,5 +120,8 @@ private: // Private Methods
 	void createLogicalDevice();
 	void createSwapChain();
 	void createImageViews();
+
+	
+	VkShaderModule createShaderModule(const std::vector<char>& code, const std::string& shaderName);
 	void createGraphicsPipeline();
 };
