@@ -138,4 +138,5 @@ private: // Private Methods
 	void createFramebuffers();
 	void createCommandPool();
 	void createCommandBuffer();
+	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 };

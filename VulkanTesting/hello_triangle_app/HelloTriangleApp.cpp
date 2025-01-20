@@ -90,11 +90,11 @@ HelloTriangleApp::HelloTriangleApp() {
 
 HelloTriangleApp::~HelloTriangleApp() {
 	vkDestroyCommandPool(device, commandPool, nullptr);
-	
+
 	for (const auto& framebuffer : swapChainFramebuffers) {
 		vkDestroyFramebuffer(device, framebuffer, nullptr);
 	}
-	
+
 	vkDestroyPipeline(device, graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 	vkDestroyRenderPass(device, renderPass, nullptr);
@@ -629,9 +629,8 @@ void HelloTriangleApp::createRenderPass() {
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;
 
+	const VkResult result = vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass);
 
-	const VkResult result = vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass); 
-	
 	if (result != VK_SUCCESS) {
 		UTIL_THROW("Failed to create render pass!");
 	}
@@ -806,5 +805,15 @@ void HelloTriangleApp::createCommandBuffer() {
 	const VkResult allocateResult = vkAllocateCommandBuffers(device, &allocateInfo, &commandBuffer);
 	if (allocateResult != VK_SUCCESS) {
 		UTIL_THROW("Failed to allocate command buffers!");
+	}
+}
+
+void HelloTriangleApp::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+	VkResult commandBufferBeginResult = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+	if (commandBufferBeginResult != VK_SUCCESS) {
+		UTIL_THROW("Failed to begin recording command buffer!");
 	}
 }
