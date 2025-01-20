@@ -82,6 +82,7 @@ private: // Member Variables
 
 	VkRenderPass renderPass;
 	VkPipelineLayout pipelineLayout;
+	VkPipeline graphicsPipeline;
 
 public: // Public Functions
 	HelloTriangleApp();
