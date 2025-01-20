@@ -80,6 +80,8 @@ private: // Member Variables
 	VkExtent2D swapChainExtent;
 	std::vector<VkImageView> swapChainImageViews;
 
+	VkPipelineLayout pipelineLayout;
+
 public: // Public Functions
 	HelloTriangleApp();
 	~HelloTriangleApp();
