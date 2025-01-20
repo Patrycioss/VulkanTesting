@@ -87,6 +87,7 @@ private: // Member Variables
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 
 	VkCommandPool commandPool;
+	VkCommandBuffer commandBuffer;
 
 public: // Public Functions
 	HelloTriangleApp();
@@ -136,4 +137,5 @@ private: // Private Methods
 
 	void createFramebuffers();
 	void createCommandPool();
+	void createCommandBuffer();
 };

@@ -85,6 +85,7 @@ HelloTriangleApp::HelloTriangleApp() {
 	createGraphicsPipeline();
 	createFramebuffers();
 	createCommandPool();
+	createCommandBuffer();
 }
 
 HelloTriangleApp::~HelloTriangleApp() {
@@ -792,5 +793,18 @@ void HelloTriangleApp::createCommandPool() {
 	const VkResult commandPoolResult = vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool);
 	if (commandPoolResult != VK_SUCCESS) {
 		UTIL_THROW("Failed to create command pool!");
+	}
+}
+
+void HelloTriangleApp::createCommandBuffer() {
+	VkCommandBufferAllocateInfo allocateInfo{};
+	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocateInfo.commandPool = commandPool;
+	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocateInfo.commandBufferCount = 1;
+
+	const VkResult allocateResult = vkAllocateCommandBuffers(device, &allocateInfo, &commandBuffer);
+	if (allocateResult != VK_SUCCESS) {
+		UTIL_THROW("Failed to allocate command buffers!");
 	}
 }
