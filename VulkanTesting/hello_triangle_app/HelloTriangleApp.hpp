@@ -80,6 +80,7 @@ private: // Member Variables
 	VkExtent2D swapChainExtent;
 	std::vector<VkImageView> swapChainImageViews;
 
+	VkRenderPass renderPass;
 	VkPipelineLayout pipelineLayout;
 
 public: // Public Functions
@@ -122,6 +123,7 @@ private: // Private Methods
 	void createLogicalDevice();
 	void createSwapChain();
 	void createImageViews();
+	void createRenderPass();
 
 	
 	VkShaderModule createShaderModule(const std::vector<char>& code, const std::string& shaderName);
