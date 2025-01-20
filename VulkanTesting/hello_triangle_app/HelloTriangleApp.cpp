@@ -83,14 +83,19 @@ HelloTriangleApp::HelloTriangleApp() {
 	createImageViews();
 	createRenderPass();
 	createGraphicsPipeline();
+	createFramebuffers();
 }
 
 HelloTriangleApp::~HelloTriangleApp() {
+	for (const auto& framebuffer : swapChainFramebuffers) {
+		vkDestroyFramebuffer(device, framebuffer, nullptr);
+	}
+	
 	vkDestroyPipeline(device, graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 	vkDestroyRenderPass(device, renderPass, nullptr);
-	
-	for (const auto imageView : swapChainImageViews) {
+
+	for (const auto& imageView : swapChainImageViews) {
 		vkDestroyImageView(device, imageView, nullptr);
 	}
 
@@ -603,7 +608,7 @@ void HelloTriangleApp::createRenderPass() {
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-	
+
 	VkAttachmentReference colorAttachmentRef{};
 	colorAttachmentRef.attachment = 0;
 	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -620,7 +625,10 @@ void HelloTriangleApp::createRenderPass() {
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;
 
-	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
+
+	const VkResult result = vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass); 
+	
+	if (result != VK_SUCCESS) {
 		UTIL_THROW("Failed to create render pass!");
 	}
 }
@@ -632,7 +640,9 @@ VkShaderModule HelloTriangleApp::createShaderModule(const std::vector<char>& cod
 	createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
 	VkShaderModule shaderModule;
-	if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+
+	const VkResult result = vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule);
+	if (result != VK_SUCCESS) {
 		UTIL_THROW("Failed to create shader module for shader with name: " + shaderName);
 	}
 
@@ -699,7 +709,7 @@ void HelloTriangleApp::createGraphicsPipeline() {
 	colorBlending.logicOpEnable = VK_FALSE;
 	colorBlending.attachmentCount = 1;
 	colorBlending.pAttachments = &colorBlendAttachment;
-	
+
 	const std::vector<VkDynamicState> dynamicStates = {
 		VK_DYNAMIC_STATE_VIEWPORT,
 		VK_DYNAMIC_STATE_SCISSOR
@@ -712,8 +722,9 @@ void HelloTriangleApp::createGraphicsPipeline() {
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	
-	if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+
+	const VkResult pipelineLayoutResult = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
+	if (pipelineLayoutResult != VK_SUCCESS) {
 		UTIL_THROW("Failed to create pipeline layout!");
 	}
 
@@ -733,10 +744,36 @@ void HelloTriangleApp::createGraphicsPipeline() {
 	pipelineInfo.renderPass = renderPass;
 	pipelineInfo.subpass = 0;
 
-	if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+	const VkResult pipelinesResult = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
+	if (pipelinesResult != VK_SUCCESS) {
 		UTIL_THROW("Failed to create graphics pipeline!");
 	}
-	
+
 	vkDestroyShaderModule(device, fragShaderModule, nullptr);
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
+}
+
+void HelloTriangleApp::createFramebuffers() {
+	swapChainFramebuffers.resize(swapChainImageViews.size());
+
+	for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+		const VkImageView attachments[] = {
+			swapChainImageViews[i]
+		};
+
+		VkFramebufferCreateInfo framebufferInfo{};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = renderPass;
+		framebufferInfo.attachmentCount = 1;
+		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.width = swapChainExtent.width;
+		framebufferInfo.height = swapChainExtent.height;
+		framebufferInfo.layers = 1;
+
+		const VkResult result = vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]);
+
+		if (result != VK_SUCCESS) {
+			UTIL_THROW("Failed to create framebuffer!");
+		}
+	}
 }

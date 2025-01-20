@@ -84,6 +84,8 @@ private: // Member Variables
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
 
+	std::vector<VkFramebuffer> swapChainFramebuffers;
+
 public: // Public Functions
 	HelloTriangleApp();
 	~HelloTriangleApp();
@@ -129,4 +131,6 @@ private: // Private Methods
 	
 	VkShaderModule createShaderModule(const std::vector<char>& code, const std::string& shaderName);
 	void createGraphicsPipeline();
+
+	void createFramebuffers();
 };
